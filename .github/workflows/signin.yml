@@ -1,0 +1,42 @@
+name: moe.one Auto Signin
+
+on:
+  schedule:
+    # 每天北京时间早上8点执行 (UTC时间0点)
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  signin:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        pip install DrissionPage
+                
+    - name: Run signin script
+      env:
+        # 从GitHub Secrets获取敏感信息
+        MOE_ONE_USERNAME: ${{ secrets.MOE_ONE_USERNAME }}
+        MOE_ONE_PASSWORD: ${{ secrets.MOE_ONE_PASSWORD }}
+        MOE_ONE_COOKIE: ${{ secrets.MOE_ONE_COOKIE }}
+        GITHUB_ACTIONS: true
+      run: |
+        python moe_one_signin.py
+                
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: signin-logs-${{ github.run_number }}
+        path: signin.log
+        retention-days: 7
